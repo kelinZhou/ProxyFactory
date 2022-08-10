@@ -1,5 +1,6 @@
 package com.kelin.proxyfactory
 
+import android.content.Context
 import com.kelin.proxyfactory.usecase.*
 import io.reactivex.Observable
 import java.lang.RuntimeException
@@ -15,6 +16,8 @@ import java.lang.RuntimeException
  */
 object ProxyFactory {
 
+    private var mContext: Context? = null
+
     internal var isDebugMode = false
         private set
 
@@ -23,9 +26,14 @@ object ProxyFactory {
     private val requireToaster: Toaster
         get() = mToaster ?: throw NullPointerException("You must call the ProxyFactory.init() Method before use the ProxyFactory")
 
-    fun init(toaster: Toaster, isDebug: Boolean = false) {
+    fun init(context: Context, toaster: Toaster, isDebug: Boolean = false) {
+        mContext = context.applicationContext
         mToaster = toaster
         isDebugMode = isDebug
+    }
+
+    internal fun getContext(): Context {
+        return mContext ?: throw NullPointerException("You must call the MapKit.init() Method before use the MapKit")
     }
 
     /**

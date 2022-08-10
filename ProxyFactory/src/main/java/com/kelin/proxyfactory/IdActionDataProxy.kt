@@ -52,8 +52,8 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     val isNotWorking: Boolean
         get() = !isWorking
 
-    val isNetWorkConnected: Boolean
-        get() = context?.let { ContextCompat.getSystemService(it, ConnectivityManager::class.java) }?.activeNetworkInfo?.isConnected == true
+    private val isNetWorkConnected: Boolean
+        get() = ContextCompat.getSystemService(context ?: ProxyFactory.getContext(), ConnectivityManager::class.java)?.activeNetworkInfo?.isConnected == true
 
     protected var mGlobalCallback: IdActionDataCallback<ID, ActionParameter, D>? = null
     private val mSubscriptions = ExtCompositeSubscription()

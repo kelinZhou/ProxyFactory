@@ -3,7 +3,6 @@ package com.kelin.proxyfactorydemo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.kelin.proxyfactory.ProxyFactory
-import com.kelin.proxyfactory.R
 import io.reactivex.Observable
 
 class MainActivity : AppCompatActivity() {

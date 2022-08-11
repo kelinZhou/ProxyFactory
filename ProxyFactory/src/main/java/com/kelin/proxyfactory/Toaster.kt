@@ -24,7 +24,7 @@ interface Toaster {
     /**
      * 显示加载中的样式。
      */
-    fun showProgress(context: Context, progressTip: String?)
+    fun showProgress(context: Context, progressTip: String? = null)
 
     fun hideProgress(context: Context)
 }

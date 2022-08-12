@@ -51,9 +51,7 @@ abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCase
     }
 
     protected open fun dealError(e: Throwable) {
-        if (!toaster.handError(e)) {
-            onError(ApiException(ApiException.Error.UNKNOWN_ERROR, e))
-        }
+        toaster.handError(e)?.also { onError(it) }
         onFinished(false)
     }
 

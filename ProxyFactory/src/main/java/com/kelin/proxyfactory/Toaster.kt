@@ -14,7 +14,7 @@ import com.kelin.apiexception.ApiException
  */
 interface Toaster {
 
-    fun handError(e: Throwable): Boolean
+    fun handError(e: Throwable): ApiException?
 
     /**
      * 显示调用接口失败时的提示。

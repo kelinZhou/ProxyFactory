@@ -39,10 +39,6 @@ class PageActionParameter private constructor(action: LoadAction, val pages: Pag
         }
     }
 
-    override fun hashCode(): Int {
-        return (pages?.hashCode() ?: 0) or action.hashCode()
-    }
-
     companion object {
         const val DEFAULT_PAGE_SIZE = 20
         const val FIRST_PAGE_NUMBER = 1

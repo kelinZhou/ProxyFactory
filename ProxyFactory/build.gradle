@@ -42,7 +42,7 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxandroid:2.1.1"
 
     //ApiException
-    implementation 'com.github.kelinZhou:ApiException:1.1.0'
+    implementation 'com.github.kelinZhou:ApiException:1.1.1'
 }
 
 

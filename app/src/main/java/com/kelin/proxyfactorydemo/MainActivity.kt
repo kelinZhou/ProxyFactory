@@ -3,6 +3,8 @@ package com.kelin.proxyfactorydemo
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import com.kelin.apiexception.ApiException
 import com.kelin.proxyfactory.ProxyFactory
 import com.kelin.proxyfactory.Toaster
@@ -29,21 +31,21 @@ class MainActivity : AppCompatActivity() {
             .request()
     }
 
-    private class ToasterImpl : Toaster {
+    private inner class ToasterImpl : Toaster {
         override fun handError(e: Throwable): ApiException? {
-            TODO("Not yet implemented")
+            return e as? ApiException
         }
 
         override fun showFailedToast(e: ApiException) {
-            TODO("Not yet implemented")
+            Toast.makeText(applicationContext, e.displayMessage, Toast.LENGTH_LONG).show()
         }
 
         override fun showProgress(context: Context, progressTip: String?) {
-            TODO("Not yet implemented")
+            Log.i("Toaster", "正在加载中...")
         }
 
         override fun hideProgress(context: Context) {
-            TODO("Not yet implemented")
+            Log.i("Toaster", "加载完毕")
         }
     }
 }

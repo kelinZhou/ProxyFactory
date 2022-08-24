@@ -1,5 +1,6 @@
 package com.kelin.proxyfactory.subscriber
 
+import androidx.annotation.CallSuper
 import com.kelin.apiexception.ApiException
 import com.kelin.proxyfactory.ProxyFactory
 import com.kelin.proxyfactory.Toaster
@@ -15,7 +16,8 @@ import com.kelin.proxyfactory.Toaster
  */
 abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCaseSubscriber<T>() {//api错误处理的观察者
 
-    protected open fun onFinished(successful: Boolean){
+    @CallSuper
+    protected open fun onFinished(successful: Boolean) {
         if (isDisposed) {
             dispose()
         }
@@ -27,32 +29,23 @@ abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCase
 
 
     final override fun onError(e: Throwable) {
-        onError(e, true)
+        doOnError(e)
+        onFinished(false)
     }
 
-    private fun onError(e: Throwable, printError: Boolean) {
+    private fun doOnError(e: Throwable) {
         try {
-            if (printError) {
-                printError(e, "ErrorHandlerSubscribe")
-            }
+            printError(e, "ErrorHandlerSubscribe")
             dealError(e)
         } catch (e: Exception) {
-            try {
-                if (printError) {
-                    printError(e, "onError error")
-                }
-                onFinished(false)
-            } catch (finishEx: Exception) {
-                if (printError) {
-                    printError(e, "onFinished")
-                }
+            if (ProxyFactory.isDebugMode) {
+                e.printStackTrace()
             }
         }
     }
 
     protected open fun dealError(e: Throwable) {
         toaster.handError(e)?.also { onError(it) }
-        onFinished(false)
     }
 
     protected fun printError(e: Throwable, tip: String) {
@@ -68,7 +61,7 @@ abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCase
             onSuccess(t)
         } catch (e: Exception) {
             printError(e, "onNext error")
-            onError(e, false)
+            doOnError(e)
         }
     }
 
@@ -77,7 +70,7 @@ abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCase
             onFinished(true)
         } catch (e: Exception) {
             printError(e, "onFinished error")
-            onError(e, false)
+            doOnError(e)
         }
     }
 }

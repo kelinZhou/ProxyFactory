@@ -29,7 +29,6 @@ object ProxyFactory {
         get() = mToaster ?: throw NullPointerException("You must call the ProxyFactory.init() Method before use the ProxyFactory")
 
     fun init(context: Context, toaster: Toaster, isDebug: Boolean = false) {
-        ApiException.init(context)
         mContext = context.applicationContext
         mToaster = toaster
         isDebugMode = isDebug

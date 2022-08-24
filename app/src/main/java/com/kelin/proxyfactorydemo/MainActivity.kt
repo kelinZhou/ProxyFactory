@@ -9,6 +9,9 @@ import com.kelin.apiexception.ApiException
 import com.kelin.proxyfactory.ProxyFactory
 import com.kelin.proxyfactory.Toaster
 import io.reactivex.Observable
+import kotlinx.android.synthetic.main.activity_main.*
+import java.lang.RuntimeException
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,20 +23,30 @@ class MainActivity : AppCompatActivity() {
 
         //Use ProxyFactory simple。
         ProxyFactory.createProxy {
-            Observable.just(2)  // Do something for Observable.
+            Observable.create<String> {
+                it.onNext("正在加载中……")
+                Thread.sleep(2000)
+//                throw RuntimeException("加载异常")
+//                Thread.sleep(2000)
+                it.onNext("加载成功！")
+                it.onComplete()
+            }  // Do something for Observable.
         }.bind(this) // Bind the lifecycle owner.
+            .progress(this)
             .onSuccess {
                 // Do something when success.
+                tvResult.text = it
             }
             .onFailed {
                 // Do something when failed.
+                tvResult.text = it.displayMessage
             }
             .request()
     }
 
     private inner class ToasterImpl : Toaster {
-        override fun handError(e: Throwable): ApiException? {
-            return e as? ApiException
+        override fun handError(e: Throwable): ApiException {
+            return e as? ApiException ?: ApiException(-10, e.message)
         }
 
         override fun showFailedToast(e: ApiException) {
@@ -41,11 +54,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun showProgress(context: Context, progressTip: String?) {
-            Log.i("Toaster", "正在加载中...")
+            tvStatus.text = "加载中，请稍后"
         }
 
         override fun hideProgress(context: Context) {
-            Log.i("Toaster", "加载完毕")
+            tvStatus.text = "加载完毕"
         }
     }
 }

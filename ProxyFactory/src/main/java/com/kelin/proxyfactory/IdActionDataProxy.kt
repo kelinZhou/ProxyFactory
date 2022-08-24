@@ -12,6 +12,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
 import com.kelin.apiexception.ApiException
 import com.kelin.logger.Logger
+import com.kelin.proxyfactory.exception.ProxyLogicError
 import com.kelin.proxyfactory.subscriber.ErrorHandlerSubscriber
 import com.kelin.proxyfactory.usecase.UseCase
 import io.reactivex.observers.DisposableObserver
@@ -89,7 +90,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         }
 
         if (isExceedMaxErrorCount(id, action)) {
-            e = ApiException(ApiException.Error.FAIL_TOO_MUCH)
+            e = ApiException(ProxyLogicError.FAIL_TOO_MUCH)
             observer.onError(e)
             observer.onComplete()
             observer.dispose()
@@ -139,7 +140,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
             null
         } else {
             if (!isNetWorkConnected) {
-                ApiException(ApiException.Error.NETWORK_UNAVAILABLE)
+                ApiException(ProxyLogicError.NETWORK_UNAVAILABLE)
             } else {
                 null
             }
@@ -212,6 +213,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     ) : ErrorHandlerSubscriber<D>(toaster) {
 
         override fun onFinished(successful: Boolean) {
+            super.onFinished(successful)
             onHideProgress()
             isWorking = false
             if (mGlobalCallback != null) {
@@ -258,8 +260,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         fun onFinished(id: ID, action: ACTION) {}
     }
 
-    interface DefaultIdDataCallback<ID, ACTION : ActionParameter, D> :
-        IdActionDataCallback<ID, ACTION, D> {
+    interface DefaultIdDataCallback<ID, ACTION : ActionParameter, D> : IdActionDataCallback<ID, ACTION, D> {
 
         fun onLoadSuccess(id: ID, data: D)
 
@@ -274,8 +275,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         fun onRefreshFailed(id: ID, e: ApiException)
     }
 
-    interface PageIdDataCallback<ID, ACTION : ActionParameter, D> :
-        DefaultIdDataCallback<ID, ACTION, D> {
+    interface PageIdDataCallback<ID, ACTION : ActionParameter, D> : DefaultIdDataCallback<ID, ACTION, D> {
 
         fun onLoadMoreFailed(id: ID, e: ApiException)
 

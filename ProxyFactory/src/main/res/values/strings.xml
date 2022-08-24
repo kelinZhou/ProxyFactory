@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="please_wait" tools:ignore="TypographyEllipsis">请稍后...</string>
+    <string name="failed_too_much">错误次数太多，请稍后再试</string>
+    <string name="network_unavailable">网络不可用，请稍后再试</string>
 </resources>

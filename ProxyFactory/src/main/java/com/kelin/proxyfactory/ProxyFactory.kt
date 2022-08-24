@@ -1,6 +1,7 @@
 package com.kelin.proxyfactory
 
 import android.content.Context
+import androidx.lifecycle.LifecycleOwner
 import com.kelin.apiexception.ApiException
 import com.kelin.proxyfactory.usecase.*
 import io.reactivex.Observable
@@ -38,6 +39,11 @@ object ProxyFactory {
         return mContext ?: throw NullPointerException("You must call the MapKit.init() Method before use the MapKit")
     }
 
+    private fun <P : LifecycleProxy> P.tryBindLifecycle(owner: LifecycleOwner?): P {
+        owner?.also { bind(owner) }
+        return this
+    }
+
     /**
      * 创建一个请求代理（不支持分页）。
      *
@@ -56,12 +62,12 @@ object ProxyFactory {
      *
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
-    fun <DATA> createActionProxy(caller: () -> Observable<DATA>): ActionDataProxy<DATA> {
+    fun <DATA> createActionProxy(owner: LifecycleOwner? = null, caller: () -> Observable<DATA>): ActionDataProxy<DATA> {
         return object : ActionDataProxy<DATA>(requireToaster) {
             override fun createUseCase(action: ActionParameter): UseCase<DATA> {
                 return ApiRequestUseCase(caller)
             }
-        }
+        }.tryBindLifecycle(owner)
     }
 
     /**
@@ -69,12 +75,12 @@ object ProxyFactory {
      *
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
-    fun <ID, DATA> createIdProxy(caller: (id: ID) -> Observable<DATA>): IdDataProxy<ID, DATA> {
+    fun <ID, DATA> createIdProxy(owner: LifecycleOwner? = null, caller: (id: ID) -> Observable<DATA>): IdDataProxy<ID, DATA> {
         return object : IdDataProxy<ID, DATA>(requireToaster) {
             override fun createUseCase(id: ID): UseCase<DATA> {
                 return ApiIdRequestUseCase(id, caller)
             }
-        }
+        }.tryBindLifecycle(owner)
     }
 
     /**
@@ -82,12 +88,12 @@ object ProxyFactory {
      *
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
-    fun <DATA> createProxy(caller: () -> Observable<DATA>): DataProxy<DATA> {
+    fun <DATA> createProxy(owner: LifecycleOwner? = null, caller: () -> Observable<DATA>): DataProxy<DATA> {
         return object : DataProxy<DATA>(requireToaster) {
             override fun createUseCase(): UseCase<DATA> {
                 return ApiRequestUseCase(caller)
             }
-        }
+        }.tryBindLifecycle(owner)
     }
 
     /**
@@ -111,7 +117,7 @@ object ProxyFactory {
      *
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
-    fun <DATA> createPageActionProxy(caller: (pages: PageActionParameter.Pages) -> Observable<DATA>): ActionDataProxy<DATA> {
+    fun <DATA> createPageActionProxy(owner: LifecycleOwner? = null, caller: (pages: PageActionParameter.Pages) -> Observable<DATA>): ActionDataProxy<DATA> {
         return object : ActionDataProxy<DATA>(requireToaster) {
             override fun createUseCase(action: ActionParameter): UseCase<DATA> {
                 //这里改用子类集成ActionDataProxy
@@ -119,6 +125,6 @@ object ProxyFactory {
                     PageApiRequestUseCase(action.pages, caller)
                 } else throw RuntimeException("Action Parameter Error!")
             }
-        }
+        }.tryBindLifecycle(owner)
     }
 }

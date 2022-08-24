@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
             .request()
     }
 
-    private class ToasterImpl:Toaster {
+    private class ToasterImpl : Toaster {
         override fun handError(e: Throwable): ApiException? {
             TODO("Not yet implemented")
         }

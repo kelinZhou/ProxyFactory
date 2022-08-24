@@ -14,7 +14,7 @@ import com.kelin.proxyfactory.usecase.UseCase
  *
  * **版本:** v 1.0.0
  */
-abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaster) {
+abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaster), LifecycleProxy {
 
     private val defaultAction = ActionParameter.createInstance()
     private val defaultId = Any()
@@ -57,7 +57,7 @@ abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaste
      * 将Proxy于声明周期绑定，由于绑定后将会减少垃圾的产生，所以通常情况下建议绑定。
      * @param owner 声明周期拥有者，通常是Activity或Fragment。
      */
-    fun bind(owner: LifecycleOwner): DataProxy<D> {
+    override fun bind(owner: LifecycleOwner): DataProxy<D> {
         bind(owner, InnerCallback())
         return this
     }

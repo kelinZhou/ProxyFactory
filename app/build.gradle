@@ -37,8 +37,5 @@ dependencies {
 
     implementation project(path: ':ProxyFactory')
 
-    //ApiException
-    implementation 'com.github.kelinZhou:ApiException:1.1.1'
-
     implementation "io.reactivex.rxjava2:rxjava:2.2.21"
 }

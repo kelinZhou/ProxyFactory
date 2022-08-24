@@ -3,6 +3,8 @@ package com.kelin.proxyfactory
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.apiexception.ApiException
+import com.kelin.logger.LogOption
+import com.kelin.logger.Logger
 import com.kelin.proxyfactory.usecase.*
 import io.reactivex.Observable
 import java.lang.RuntimeException
@@ -29,6 +31,7 @@ object ProxyFactory {
         get() = mToaster ?: throw NullPointerException("You must call the ProxyFactory.init() Method before use the ProxyFactory")
 
     fun init(context: Context, toaster: Toaster, isDebug: Boolean = false) {
+        LogOption.init("ProxyFactory", isDebug)
         mContext = context.applicationContext
         mToaster = toaster
         isDebugMode = isDebug

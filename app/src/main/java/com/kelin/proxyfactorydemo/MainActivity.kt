@@ -14,12 +14,31 @@ import java.lang.RuntimeException
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+
+    private var id = 0
+
+    private val testProxy by lazy {
+        ProxyFactory.createIdProxy<Int, String> { id ->
+            Observable.just(id).map {
+                Thread.sleep(500)
+                "我是ID=${it}的结果"
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         ProxyFactory.init(application, ToasterImpl())
 
+        testProxy.bind(this)
+            .onSuccess { id, data ->
+                Log.i("MainActivity=====", "id=$id | data=$data")
+            }
+
+        btnTest.setOnClickListener {
+            testProxy.request(id++)
+        }
 
         //Use ProxyFactory simple。
         ProxyFactory.createProxy {

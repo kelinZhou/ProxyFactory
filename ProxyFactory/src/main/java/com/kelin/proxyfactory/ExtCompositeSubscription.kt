@@ -173,23 +173,4 @@ internal class ExtCompositeSubscription {
         }
         return false
     }
-
-    fun clearAllUnSubscribed() {
-        if (!unSubscribed) {
-            synchronized(this) {
-                if (unSubscribed || subscriptions == null) {
-                    return
-                } else {
-                    val it = subscriptions!!.iterator()
-                    while (it.hasNext()) {
-                        val subscription = it.next()
-                        if (!subscription.isDisposed) {
-                            unsubscribe(subscription)
-                            it.remove()
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

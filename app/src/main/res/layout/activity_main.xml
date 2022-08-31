@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     tools:context="com.kelin.proxyfactorydemo.MainActivity">
 
+    <Button
+        android:id="@+id/btnTest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="20dp"/>
+
     <TextView
         android:id="@+id/tvResult"
         android:layout_width="wrap_content"

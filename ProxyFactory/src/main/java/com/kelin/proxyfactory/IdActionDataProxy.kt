@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.util.LruCache
 import android.util.SparseArray
+import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -57,7 +58,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         get() = ContextCompat.getSystemService(context ?: ProxyFactory.getContext(), ConnectivityManager::class.java)?.activeNetworkInfo?.isConnected == true
 
     protected var mGlobalCallback: IdActionDataCallback<ID, ActionParameter, D>? = null
-    private val mSubscriptions = ExtCompositeSubscription()
+    private var mSubscriptions: ExtCompositeSubscription? = null
     private val mErrorCount = SparseArray<ErrorWrapper>()
 
     val isBound: Boolean
@@ -105,8 +106,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
 
         useCase.execute(observer)
 
-        mSubscriptions.clearAllUnSubscribed()
-        mSubscriptions.add(observer)
+        mSubscriptions?.add(observer)
     }
 
     private fun isExceedMaxErrorCount(id: ID, action: ActionParameter): Boolean {
@@ -152,10 +152,12 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
      * @param owner 声明周期拥有者，通常是Activity或Fragment。
      * @param callBack 异步回调。
      */
+    @CallSuper
     fun bind(
         owner: LifecycleOwner,
         callBack: IdActionDataCallback<ID, ActionParameter, D>
     ): IdActionDataProxy<ID, D> {
+        mSubscriptions = ExtCompositeSubscription()
         if (mGlobalCallback != null) {
             if (mGlobalCallback != callBack) {
                 unbind()
@@ -199,8 +201,8 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
 
     fun unbind() {
         this.mGlobalCallback = null
-        if (!mSubscriptions.isDisposed()) {
-            mSubscriptions.disposed()
+        if (mSubscriptions?.isDisposed() == false) {
+            mSubscriptions?.disposed()
         }
     }
 

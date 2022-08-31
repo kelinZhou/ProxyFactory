@@ -37,6 +37,10 @@ object ProxyFactory {
         isDebugMode = isDebug
     }
 
+    fun recycle() {
+        IdActionDataProxy.clearUseCase()
+    }
+
     internal fun getContext(): Context {
         return mContext ?: throw NullPointerException("You must call the MapKit.init() Method before use the MapKit")
     }

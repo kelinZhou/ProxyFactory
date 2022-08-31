@@ -34,7 +34,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         private const val CONSTANT_CACHE_KEY = 1
         private val mUseCaseMap = LruCache<Int, UseCase<*>>(5)
 
-        fun clearUseCase() {
+        internal fun clearUseCase() {
             mUseCaseMap.evictAll()
         }
     }
@@ -209,10 +209,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     /**
      * 用户行为观察者
      */
-    internal inner class IdActionCaseSubscriber(
-        private val id: ID,
-        private val action: ActionParameter
-    ) : ErrorHandlerSubscriber<D>(toaster) {
+    internal inner class IdActionCaseSubscriber(private val id: ID, private val action: ActionParameter) : ErrorHandlerSubscriber<D>(toaster) {
 
         override fun onFinished(successful: Boolean) {
             super.onFinished(successful)

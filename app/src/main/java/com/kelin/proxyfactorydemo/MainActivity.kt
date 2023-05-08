@@ -74,18 +74,31 @@ ProxyFactory.createPageIdActionProxy<String, String> { id, pages ->  Observable.
     }
 
     private inner class ToasterImpl : Toaster {
+
+        /**
+         * 处理异步任务中捕获的异常，如果你希望自己处理改异常则需要返回null，返回null之后Proxy的onFailed方法将不会被回调，否则会将你返回的ApiException回调给Proxy的onFailed方法。
+         */
         override fun handError(e: Throwable): ApiException {
             return e as? ApiException ?: ApiException(-10, e.message)
         }
 
+        /**
+         * 显示调用异步任务失败时的提示。
+         */
         override fun showFailedToast(e: ApiException) {
             Toast.makeText(applicationContext, e.displayMessage, Toast.LENGTH_LONG).show()
         }
 
+        /**
+         * 显示加载中的样式。
+         */
         override fun showProgress(context: Context, progressTip: String?) {
             tvStatus.text = "加载中，请稍后"
         }
 
+        /**
+         * 隐藏加载中的样式。
+         */
         override fun hideProgress(context: Context) {
             tvStatus.text = "加载完毕"
         }

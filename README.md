@@ -80,7 +80,7 @@ ProxyFactory.createIdActionProxy<String, String> { id -> Observable.just("I'm Re
     })
     .request(ActionParameter.createInstance(), "Kelin")
 ```
-需要注意的是[IdActionDataProxy](/ProxyFactory/src/main/java/com/kelin/proxyfactory/IdActionDataProxy.kt)不再支持`.onSuccess`和`onFailed`的方式设置回调。
+需要注意的是[IdActionDataProxy](/ProxyFactory/src/main/java/com/kelin/proxyfactory/IdActionDataProxy.kt)不再支持`onSuccess`和`onFailed`的方式设置回调。
 
 ### ActionParameter
 动作及功能参数，[ActionParameter](/ProxyFactory/src/main/java/com/kelin/proxyfactory/ActionParameter.kt)的核心就是[LoadAction](/ProxyFactory/src/main/java/com/kelin/proxyfactory/LoadAction.kt)。而`LoadAction`是一个枚举类，主要成员如下：

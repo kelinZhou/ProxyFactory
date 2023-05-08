@@ -85,11 +85,11 @@ ProxyFactory.createIdActionProxy<String, String> { id -> Observable.just("I'm Re
 ### ActionParameter
 动作及功能参数，[ActionParameter](/ProxyFactory/src/main/java/com/kelin/proxyfactory/ActionParameter.kt)的核心就是[LoadAction](/ProxyFactory/src/main/java/com/kelin/proxyfactory/LoadAction.kt)。而`LoadAction`是一个枚举类，主要成员如下：
     
-    * LOAD ：没有数据load。对于分页的，load总是第一页的数据。
-    * RETRY ：load失败，retry（这个不叫refresh！！！！）。对于分页的，load总是第一页的数据。
-    * REFRESH ： 已经load成功，再次load。对于分页的，load总是第一页的数据。
-    * AUTO_REFRESH ： 已经load成功，再次load。对于分页的，load总是已经加载过的所有页。
-    * LOAD_MORE ： 加载更多(分页加载)。
+* LOAD ：没有数据load。对于分页的，load总是第一页的数据。
+* RETRY ：load失败，retry（这个不叫refresh！！！！）。对于分页的，load总是第一页的数据。
+* REFRESH ： 已经load成功，再次load。对于分页的，load总是第一页的数据。
+* AUTO_REFRESH ： 已经load成功，再次load。对于分页的，load总是已经加载过的所有页。
+* LOAD_MORE ： 加载更多(分页加载)。
 
 说到分页`ActionParameter`还有个子类[PageActionParameter](/ProxyFactory/src/main/java/com/kelin/proxyfactory/PageActionParameter.kt)，`PageActionParameter`可以用来处理分页逻辑。
 

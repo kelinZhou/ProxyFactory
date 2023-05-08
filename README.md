@@ -22,6 +22,40 @@ dependencies {
 ```
 
 ## 使用
+在使用之前需要先对其进行初始化。
+```kotlin
+ProxyFactory.init(application, ToasterImpl())
+
+class ToasterImpl : Toaster {
+    /**
+     * 处理异步任务中捕获的异常，如果你希望自己处理改异常则需要返回null，返回null之后Proxy的onFailed方法将不会被回调，否则会将你返回的ApiException回调给Proxy的onFailed方法。
+     */
+    override fun handError(e: Throwable): ApiException {
+        return e as? ApiException ?: ApiException(-10, e.message)
+    }
+
+    /**
+     * 显示调用异步任务失败时的提示。
+     */
+    override fun showFailedToast(e: ApiException) {
+        Toast.makeText(applicationContext, e.displayMessage, Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * 显示加载中的样式。
+     */
+    override fun showProgress(context: Context, progressTip: String?) {
+        showProgressDialog(context, progressTip)
+    }
+
+    /**
+     * 隐藏加载中的样式。
+     */
+    override fun hideProgress(context: Context) {
+        dismissProgressDialog(context)
+    }
+}
+```
 ### Proxy
 ProxyFactory提供了以下几类的Proxy用于处理不同业务场景。
 
@@ -110,6 +144,8 @@ ProxyFactory.createPageIdActionProxy<String, String> { id, pages ->  Observable.
 上面的栗子中`PageActionParameter.createInstance(true, 20)`参数`true`表示启用分页加载，`20`表示每页的数量。
 
 ## 注意事项
+
+### bind方法
 所有的Proxy都是支持通过调用其`bind`方法为其绑定到生命周期组件`LifecycleOwner`的，是为了防止页面销毁后任务没有销毁而回调又是内部类从而可能导致内存泄露的问题。
 当然，`bind`方法也不是强制要求调用的，没有调用过`bind`方法的Proxy的回调均为一次性回调，即无论是`onSuccess`还是`onFailed`被回调过一次后，回调就会立即从Proxy内部被移除引用。也就意味着没有调用过`bind`方法的Proxy不能被重复使用。
 
@@ -141,6 +177,33 @@ val proxy = ProxyFactory.createProxy { Observable.just("I'm Result!") }
 btnTest.setOnClickListener{
     proxy.request()  //请求启动任务。
 }
+```
+
+### progress方法
+所有Proxy都支持在调用`request`方法时自动弹窗loading对话框。loading对话框的弹出和隐藏能力由[Toaster](/ProxyFactory/src/main/java/com/kelin/proxyfactory/Toaster.kt)接口中的`showProgress`和`hideProgress`方法提供。
+*下面举个栗子来演示progress方法的用法：*
+```kotlin
+ProxyFactory.createProxy { Observable.just("I'm Result!") }
+    .progress(context, "Please Wait...") //第一个参数为弹出对话框时所需要的上下文，第二个参数为loading对话框中需要显示的文字。
+    .onSuccess { data ->
+        // Do something with data.
+    }
+    .onFailed { e ->
+        // Do something with Exception.
+    }
+    .request()  //请求启动任务。
+```
+
+### setNotToast方法
+为了方便调用也为了回调更加灵活，所以`onSuccess`还是`onFailed`回调并不是都必须同时设置的，考虑到通常情况下`onFailed`回调只是为了提示用户，所以如果没有设置`onFailed`回调则默认会弹出Toast提示用户。弹出Toast的能力由[Toaster](/ProxyFactory/src/main/java/com/kelin/proxyfactory/Toaster.kt)接口中的`showFailedToast`方法提供。如果你不希望在失败时弹出Toast提示也不想设置`onFailed`回调则可以使用该方法。
+*下面举个栗子来演示setNotToast方法的用法：*
+```kotlin
+ProxyFactory.createProxy { Observable.just("I'm Result!") }
+    .setNotToast() //禁止在失败时自动弹出Toast。
+    .onSuccess { data ->
+        // Do something with data.
+    }
+    .request()  //请求启动任务。
 ```
 
 * * *

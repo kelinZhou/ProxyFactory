@@ -80,9 +80,7 @@ abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaste
         if (mGlobalCallback != null && mGlobalCallback is InnerCallback) { //如果调用过bind方法则直接为其success成员赋值。
             (mGlobalCallback as InnerCallback).success = onSuccess
         } else {  //如果还没有调用过bind方法则默认设置单次回调，即回调一次后就丢弃用户设置的回调。如果再次调用request方法则无法继续监听到回调。
-            mGlobalCallback = SingleCallback().apply {
-                success = onSuccess
-            }
+            mGlobalCallback = SingleCallback().apply { success = onSuccess }
         }
         return this
     }
@@ -95,8 +93,7 @@ abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaste
         if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
             (mGlobalCallback as InnerCallback).failed = onFailed
         } else {
-            mGlobalCallback = SingleCallback()
-            (mGlobalCallback as SingleCallback).failed = onFailed
+            mGlobalCallback = SingleCallback().apply { failed = onFailed }
         }
         return this
     }

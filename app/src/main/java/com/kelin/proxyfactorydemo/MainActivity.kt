@@ -6,8 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import com.kelin.apiexception.ApiException
-import com.kelin.proxyfactory.ProxyFactory
-import com.kelin.proxyfactory.Toaster
+import com.kelin.proxyfactory.*
 import io.reactivex.Observable
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.RuntimeException
@@ -40,6 +39,18 @@ class MainActivity : AppCompatActivity() {
             testProxy.request(id++)
         }
 
+ProxyFactory.createPageIdActionProxy<String, String> { id, pages ->  Observable.just("I'm Result for $id. Pages(page:${pages.page}, size:${pages.size}).") }
+    .bind(this, object :IdActionDataProxy.IdActionDataCallback<String, ActionParameter, String>{
+        override fun onSuccess(id: String, action: ActionParameter, data: String) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onFailed(id: String, action: ActionParameter, e: ApiException) {
+            TODO("Not yet implemented")
+        }
+    })
+    .request(PageActionParameter.createInstance(true, 20), "Kelin")
+
         //Use ProxyFactory simple。
         ProxyFactory.createProxy {
             Observable.create<String> {
@@ -50,8 +61,7 @@ class MainActivity : AppCompatActivity() {
                 it.onNext("加载成功！")
                 it.onComplete()
             }  // Do something for Observable.
-        }.bind(this) // Bind the lifecycle owner.
-            .progress(this)
+        }.progress(this)
             .onSuccess {
                 // Do something when success.
                 tvResult.text = it

@@ -9,17 +9,14 @@ package com.kelin.proxyfactory
  *
  * **版本:** v 1.0.0
  */
-open class ActionParameter internal constructor(pAction: LoadAction) {
+open class ActionParameter internal constructor(private var pAction: LoadAction) {
 
-    var action: LoadAction
-        private set
+    val action: LoadAction
+        get() = pAction
 
-    init {
-        action = pAction
-    }
 
     fun updateAction(action: LoadAction): ActionParameter {
-        this.action = action
+        this.pAction = action
         return this
     }
 
@@ -31,8 +28,8 @@ open class ActionParameter internal constructor(pAction: LoadAction) {
         /**
          * 获取加载实例。
          */
-        fun createInstance(): ActionParameter {
-            return ActionParameter(LoadAction.LOAD)
+        fun createInstance(action: LoadAction = LoadAction.LOAD): ActionParameter {
+            return ActionParameter(action)
         }
     }
 }

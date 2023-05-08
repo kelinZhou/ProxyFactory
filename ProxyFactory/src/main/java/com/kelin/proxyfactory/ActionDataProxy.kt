@@ -35,6 +35,10 @@ abstract class ActionDataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(
 
     protected open fun checkNetworkEnable(action: ActionParameter): Boolean = true
 
+    fun request(action: LoadAction) {
+        request(ActionParameter.createInstance(action))
+    }
+
     fun request(action: ActionParameter) {
         super.request(action, defaultRequestId)
     }
@@ -72,7 +76,7 @@ abstract class ActionDataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(
      * 设置成功回调。
      * @param onSuccess 回调函数，当异步任务成功后将会调用该回调函数。
      */
-    fun onSuccess(onSuccess: (data: D) -> Unit): ActionDataProxy<D> {
+    fun onSuccess(onSuccess: (data: D, action: ActionParameter) -> Unit): ActionDataProxy<D> {
         if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
             (mGlobalCallback as InnerCallback).success = onSuccess
         } else {
@@ -85,7 +89,7 @@ abstract class ActionDataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(
      * 设置失败回调。
      * @param onFailed 回调函数，当异步任务失败后将会调用该回调函数。
      */
-    fun onFailed(onFailed: (e: ApiException) -> Unit): ActionDataProxy<D> {
+    fun onFailed(onFailed: (e: ApiException, action: ActionParameter) -> Unit): ActionDataProxy<D> {
         if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
             (mGlobalCallback as InnerCallback).failed = onFailed
         } else {
@@ -96,17 +100,17 @@ abstract class ActionDataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(
 
     private open inner class InnerCallback : IdActionDataCallback<Any, ActionParameter, D> {
 
-        var success: ((data: D) -> Unit)? = null
+        var success: ((data: D, action: ActionParameter) -> Unit)? = null
 
-        var failed: ((e: ApiException) -> Unit)? = null
+        var failed: ((e: ApiException, action: ActionParameter) -> Unit)? = null
 
         override fun onSuccess(id: Any, action: ActionParameter, data: D) {
-            success?.invoke(data)
+            success?.invoke(data, action)
         }
 
         override fun onFailed(id: Any, action: ActionParameter, e: ApiException) {
             if (failed != null) {
-                failed?.invoke(e)
+                failed?.invoke(e, action)
             } else if (!noToast) {
                 toaster.showFailedToast(e)
             }

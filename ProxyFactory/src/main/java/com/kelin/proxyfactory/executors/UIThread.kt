@@ -1,15 +1,9 @@
-package com.kelin.proxyfactory.executors;
+package com.kelin.proxyfactory.executors
 
+import io.reactivex.Scheduler
+import io.reactivex.android.schedulers.AndroidSchedulers
 
-import io.reactivex.Scheduler;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-
-public final class UIThread implements PostExecutionThread {
-    public UIThread() {
-    }
-
-    @Override
-    public Scheduler getScheduler() {
-        return AndroidSchedulers.mainThread();
-    }
+class UIThread : PostExecutionThread {
+    override val scheduler: Scheduler
+        get() = AndroidSchedulers.mainThread()
 }

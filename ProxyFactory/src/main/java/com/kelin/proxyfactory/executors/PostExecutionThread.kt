@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kelin.proxyfactory.executors;
+package com.kelin.proxyfactory.executors
 
-import io.reactivex.Scheduler;
+import io.reactivex.Scheduler
 
 /**
  * Thread abstraction created to change the execution context from any thread to any other thread.
  * Useful to encapsulate a UI Thread for example, since some job will be done in background, an
  * implementation of this interface will change context and update the UI.
  */
-public interface PostExecutionThread {
-  Scheduler getScheduler();
+interface PostExecutionThread {
+    val scheduler: Scheduler?
 }

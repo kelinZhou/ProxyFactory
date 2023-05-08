@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kelin.proxyfactory.executors;
+package com.kelin.proxyfactory.executors
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.Executor
 
 /**
  * Executor implementation can be based on different frameworks or techniques of asynchronous
  * execution, but every implementation will execute the
-
+ *
  */
-public interface ThreadExecutor extends Executor {}
+interface ThreadExecutor : Executor

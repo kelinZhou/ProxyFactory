@@ -82,7 +82,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         context?.also { toaster.showProgress(it, progressText) }
         var e = checkPreCondition(id, action)
         val observer = createCallback(id, action)
-        Logger.system("===>DataProxy")?.e("Working:${this} | $observer")
+        Logger.system("===>DataProxy")?.d("Working:${hashCode()} | ${observer.hashCode()}")
         if (e != null) {
             observer.onError(e)
             observer.onComplete()
@@ -211,7 +211,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
 
         override fun onFinished(successful: Boolean?) {
             super.onFinished(successful)
-            Logger.system("===>DataProxy")?.e("Finished:${this@IdActionDataProxy} | $this")
+            Logger.system("===>DataProxy")?.d("Finished:${this@IdActionDataProxy.hashCode()} | ${hashCode()}")
             isWorking = false
             onHideProgress()
             if (mGlobalCallback != null) {

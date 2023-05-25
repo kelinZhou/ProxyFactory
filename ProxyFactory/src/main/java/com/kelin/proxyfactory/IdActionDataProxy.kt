@@ -212,10 +212,10 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
      */
     internal inner class IdActionCaseSubscriber(private val id: ID, private val action: ActionParameter) : ErrorHandlerSubscriber<D>(toaster) {
 
-        override fun onFinished(successful: Boolean) {
-            isWorking = false
-            Logger.system("===>DataProxy")?.e("Finished:${this@IdActionDataProxy} | $this")
+        override fun onFinished(successful: Boolean?) {
             super.onFinished(successful)
+            Logger.system("===>DataProxy")?.e("Finished:${this@IdActionDataProxy} | $this")
+            isWorking = false
             onHideProgress()
             if (mGlobalCallback != null) {
                 mGlobalCallback!!.onFinished(id, action)

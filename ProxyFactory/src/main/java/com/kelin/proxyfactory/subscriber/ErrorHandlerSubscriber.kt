@@ -14,10 +14,24 @@ import com.kelin.proxyfactory.Toaster
  *
  * **版本:** v 1.0.0
  */
-abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCaseSubscriber<T>() {//api错误处理的观察者
+abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCaseSubscriber<T>(), Achievable {//api错误处理的观察者
 
+    override val isAchieved: Boolean
+        get() = isDisposed
+
+    override fun achieved() {
+        if (!isDisposed) {
+            dispose()
+        }
+        onFinished(null)
+    }
+
+    /**
+     * 当结束时被调用。
+     * @param successful 是否是成功的，true表示成功，false表示失败，null表示用户手动中断(例如用户取消订阅)。
+     */
     @CallSuper
-    protected open fun onFinished(successful: Boolean) {
+    open fun onFinished(successful: Boolean?) {
         if (isDisposed) {
             dispose()
         }

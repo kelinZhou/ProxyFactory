@@ -1,6 +1,6 @@
 package com.kelin.proxyfactory
 
-import io.reactivex.disposables.Disposable
+import com.kelin.proxyfactory.subscriber.Achievable
 import io.reactivex.exceptions.CompositeException
 
 import java.util.*
@@ -17,16 +17,15 @@ import java.util.*
  *
  * **版本:** v 1.0.0
  */
-internal class ExtCompositeSubscription {
+internal class ExtCompositeSubscription(vararg subscriptions: Achievable) {
 
-    private var subscriptions: MutableSet<Disposable>? = null
+    private var subscriptions: MutableSet<Achievable> = HashSet()
+
     @Volatile
     private var unSubscribed: Boolean = false
 
-    constructor() {}
-
-    constructor(vararg subscriptions: Disposable) {
-        this.subscriptions = HashSet(subscriptions.toList())
+    init {
+        subscriptions.takeIf { it.isNotEmpty() }?.also { this.subscriptions.addAll(it) }
     }
 
     fun isDisposed(): Boolean {
@@ -34,24 +33,21 @@ internal class ExtCompositeSubscription {
     }
 
     /**
-     * Adds a new [Subscription] to this `CompositeSubscription` if the
+     * Adds a new [Achievable] to this `CompositeSubscription` if the
      * `CompositeSubscription` is not yet unSubscribed. If the `CompositeSubscription` *is*
      * unSubscribed, `add` will indicate this by explicitly unsubscribing the new `Subscription` as
      * well.
      *
-     * @param s the [Subscription] to add
+     * @param s the [Achievable] to add
      */
-    fun add(s: Disposable) {
-        if (s.isDisposed) {
+    fun add(s: Achievable) {
+        if (s.isAchieved) {
             return
         }
         if (!unSubscribed) {
             synchronized(this) {
                 if (!unSubscribed) {
-                    if (subscriptions == null) {
-                        subscriptions = HashSet(4)
-                    }
-                    subscriptions!!.add(s)
+                    subscriptions.add(s)
                     return
                 }
             }
@@ -66,18 +62,20 @@ internal class ExtCompositeSubscription {
      *
      * @param s the [Subscription] to remove
      */
-    fun remove(s: Disposable) {
+    fun remove(s: Achievable) {
         if (!unSubscribed) {
             var unsubscribe: Boolean
             synchronized(this) {
-                if (unSubscribed || subscriptions == null) {
+                if (unSubscribed || subscriptions.isEmpty()) {
                     return
                 }
-                unsubscribe = subscriptions!!.remove(s)
+                unsubscribe = subscriptions.remove(s.also {
+                    it.achieved()
+                })
             }
             if (unsubscribe) {
                 // if we removed successfully we then need to call unSubscribe on it (outside of the lock)
-                s.dispose()
+                s.achieved()
             }
         }
     }
@@ -89,13 +87,13 @@ internal class ExtCompositeSubscription {
      */
     fun clear() {
         if (!unSubscribed) {
-            var unsubscribe: Collection<Disposable>?
+            var unsubscribe: Collection<Achievable>?
             synchronized(this) {
-                if (unSubscribed || subscriptions == null) {
+                if (unSubscribed || subscriptions.isEmpty()) {
                     return
                 } else {
                     unsubscribe = subscriptions
-                    subscriptions = null
+                    subscriptions.clear()
                 }
             }
             disposeAll(unsubscribe)
@@ -105,28 +103,28 @@ internal class ExtCompositeSubscription {
 
     fun disposed() {
         if (!unSubscribed) {
-            var unsubscribe: Collection<Disposable>?
+            var unsubscribe: Collection<Achievable>?
             synchronized(this) {
                 if (unSubscribed) {
                     return
                 }
                 unSubscribed = true
                 unsubscribe = subscriptions
-                subscriptions = null
+                subscriptions.clear()
             }
             // we will only get here once
             disposeAll(unsubscribe)
         }
     }
 
-    private fun disposeAll(subscriptions: Collection<Disposable>?) {
+    private fun disposeAll(subscriptions: Collection<Achievable>?) {
         if (subscriptions == null) {
             return
         }
         var es: MutableList<Throwable>? = null
         for (s in subscriptions) {
             try {
-                s.dispose()
+                s.achieved()
             } catch (e: Throwable) {
                 if (es == null) {
                     es = ArrayList()
@@ -135,25 +133,6 @@ internal class ExtCompositeSubscription {
             }
 
         }
-        if (!es.isNullOrEmpty()) {
-            throw CompositeException(es)
-        }
-    }
-
-    private fun unsubscribe(subscription: Disposable?) {
-        if (subscription == null) {
-            return
-        }
-        var es: MutableList<Throwable>? = null
-        try {
-            subscription.dispose()
-        } catch (e: Throwable) {
-            if (es == null) {
-                es = ArrayList()
-            }
-            es.add(e)
-        }
-
         if (!es.isNullOrEmpty()) {
             throw CompositeException(es)
         }
@@ -168,7 +147,7 @@ internal class ExtCompositeSubscription {
     fun hasSubscriptions(): Boolean {
         if (!unSubscribed) {
             synchronized(this) {
-                return !unSubscribed && subscriptions != null && !subscriptions!!.isEmpty()
+                return !unSubscribed && subscriptions.isNotEmpty()
             }
         }
         return false

@@ -14,7 +14,7 @@ import com.kelin.proxyfactory.Toaster
  *
  * **版本:** v 1.0.0
  */
-abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCaseSubscriber<T>(), Achievable {//api错误处理的观察者
+abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCaseSubscriber<T>() {//api错误处理的观察者
 
     override val isAchieved: Boolean
         get() = isDisposed

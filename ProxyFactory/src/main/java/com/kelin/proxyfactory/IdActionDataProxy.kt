@@ -7,14 +7,12 @@ import android.util.SparseArray
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.*
 import com.kelin.apiexception.ApiException
 import com.kelin.logger.Logger
 import com.kelin.proxyfactory.exception.ProxyLogicError
 import com.kelin.proxyfactory.subscriber.ErrorHandlerSubscriber
+import com.kelin.proxyfactory.subscriber.UseCaseSubscriber
 import com.kelin.proxyfactory.usecase.UseCase
 import io.reactivex.observers.DisposableObserver
 import java.lang.Exception
@@ -28,7 +26,7 @@ import java.lang.Exception
  *
  * **版本:** v 1.0.0
  */
-abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : LifecycleObserver {
+abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : LifecycleEventObserver {
 
     companion object {
         private const val CONSTANT_CACHE_KEY = 1
@@ -132,7 +130,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         return result
     }
 
-    private fun createCallback(id: ID, action: ActionParameter): DisposableObserver<D> {
+    private fun createCallback(id: ID, action: ActionParameter): UseCaseSubscriber<D> {
         return IdActionCaseSubscriber(id, action)
     }
 
@@ -154,10 +152,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
      * @param callBack 异步回调。
      */
     @CallSuper
-    fun bind(
-        owner: LifecycleOwner,
-        callBack: IdActionDataCallback<ID, ActionParameter, D>
-    ): IdActionDataProxy<ID, D> {
+    fun bind(owner: LifecycleOwner, callBack: IdActionDataCallback<ID, ActionParameter, D>): IdActionDataProxy<ID, D> {
         mSubscriptions = ExtCompositeSubscription()
         if (mGlobalCallback != null) {
             if (mGlobalCallback != callBack) {
@@ -193,12 +188,14 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         context?.also { toaster.hideProgress(it) }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun destroy() {
-        context = null
-        unbind()
+    override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+        if (event == Lifecycle.Event.ON_DESTROY) {
+            onHideProgress()
+            context = null
+            unbind()
+            source.lifecycle.removeObserver(this)
+        }
     }
-
 
     fun unbind() {
         this.mGlobalCallback = null

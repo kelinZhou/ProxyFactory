@@ -11,7 +11,7 @@ import io.reactivex.observers.DisposableObserver
  *
  * **版本:** v 1.0.0
  */
-abstract class UseCaseSubscriber<T> : DisposableObserver<T>() {
+abstract class UseCaseSubscriber<T> : DisposableObserver<T>(), Achievable {
 
     override fun onComplete() {
         // no-op by default.

@@ -30,12 +30,6 @@ abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaste
 
     abstract fun createUseCase(): UseCase<D>
 
-    final override fun checkNetworkEnable(id: Any, action: ActionParameter): Boolean {
-        return checkNetworkEnable()
-    }
-
-    protected open fun checkNetworkEnable(): Boolean = true
-
     /**
      * 发起请求。
      */

@@ -14,7 +14,6 @@ import com.kelin.proxyfactory.exception.ProxyLogicError
 import com.kelin.proxyfactory.subscriber.ErrorHandlerSubscriber
 import com.kelin.proxyfactory.subscriber.UseCaseSubscriber
 import com.kelin.proxyfactory.usecase.UseCase
-import io.reactivex.observers.DisposableObserver
 import java.lang.Exception
 
 /**
@@ -40,7 +39,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     private var context: Context? = null
     private var progressText: String? = null
 
-    private var uncheckNetWork = false
+    private var checkNetWork = true
 
     protected var noToast = false
 
@@ -63,14 +62,16 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         get() = mGlobalCallback != null
 
 
+    fun withoutNetWork() {
+        checkNetWork = false
+    }
+
     open fun setNotToast(): IdActionDataProxy<ID, D> {
         noToast = true
         return this
     }
 
     protected abstract fun createUseCase(id: ID, action: ActionParameter): UseCase<D>
-
-    protected open fun checkNetworkEnable(id: ID, action: ActionParameter): Boolean = true
 
     /**
      * 执行请求，调用该方法使代理去做他该做的事情。
@@ -135,14 +136,10 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     }
 
     private fun checkPreCondition(id: ID, action: ActionParameter): ApiException? {
-        return if (uncheckNetWork || !checkNetworkEnable(id, action)) {
+        return if (!checkNetWork || isNetWorkConnected) {
             null
         } else {
-            if (!isNetWorkConnected) {
-                ApiException(ProxyLogicError.NETWORK_UNAVAILABLE)
-            } else {
-                null
-            }
+            ApiException(ProxyLogicError.NETWORK_UNAVAILABLE)
         }
     }
 

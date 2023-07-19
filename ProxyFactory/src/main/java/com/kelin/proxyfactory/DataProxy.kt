@@ -19,6 +19,11 @@ abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaste
     private val defaultAction = ActionParameter.createInstance()
     private val defaultId = Any()
 
+    override fun withoutNetWork(): DataProxy<D> {
+        super.withoutNetWork()
+        return this
+    }
+
     override fun setNotToast(): DataProxy<D> {
         super.setNotToast()
         return this

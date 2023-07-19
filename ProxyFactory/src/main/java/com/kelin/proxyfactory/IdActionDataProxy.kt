@@ -62,8 +62,9 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         get() = mGlobalCallback != null
 
 
-    fun withoutNetWork() {
+    open fun withoutNetWork(): IdActionDataProxy<ID, D> {
         checkNetWork = false
+        return this
     }
 
     open fun setNotToast(): IdActionDataProxy<ID, D> {

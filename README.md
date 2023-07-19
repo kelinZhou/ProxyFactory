@@ -159,7 +159,7 @@ val proxy = ProxyFactory.createProxy { Observable.just("I'm Result!") }
         // Do something with Exception.
     }
 btnTest.setOnClickListener{
-    proxy.request()  //请求启动任务。
+    proxy.request()  //第二次请求启动任务会得不到回调。
 }
 ```
 在这个栗子中，只有`btnTest`按钮被第一次点击的时候会执行`onSuccess`还是`onFailed`回调，而从第二次开始以及之后的所有点击都不会再执行`onSuccess`还是`onFailed`回调了。
@@ -200,6 +200,17 @@ ProxyFactory.createProxy { Observable.just("I'm Result!") }
 ```kotlin
 ProxyFactory.createProxy { Observable.just("I'm Result!") }
     .setNotToast() //禁止在失败时自动弹出Toast。
+    .onSuccess { data ->
+        // Do something with data.
+    }
+    .request()  //请求启动任务。
+```
+
+### withoutNetWork方法
+所有Proxy在执行request方法时都会默认检测网络状态，如果当前无网络则可能会请求失败。所以该方法是用来关闭网络状态检测的。
+```kotlin
+ProxyFactory.createProxy { Observable.just("I'm Result!") }
+    .withoutNetWork() //禁用网络状态检测。
     .onSuccess { data ->
         // Do something with data.
     }

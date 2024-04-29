@@ -21,7 +21,7 @@ abstract class UseCaseSubscriber<T> : DisposableObserver<T>(), Achievable {
         // no-op by default.
     }
 
-    override fun onNext(t: T) {
+    override fun onNext(t: T & Any) {
         // no-op by default.
     }
 }

@@ -7,12 +7,12 @@ import android.util.Log
 import android.widget.Toast
 import com.kelin.apiexception.ApiException
 import com.kelin.proxyfactory.*
+import com.kelin.proxyfactorydemo.databinding.ActivityMainBinding
 import io.reactivex.Observable
-import kotlinx.android.synthetic.main.activity_main.*
-import java.lang.RuntimeException
-import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+
+    private var vb: ActivityMainBinding? = null
 
     private var id = 0
 
@@ -27,7 +27,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        vb = ActivityMainBinding.inflate(layoutInflater).also {
+            setContentView(it.root)
+        }
         ProxyFactory.init(application, ToasterImpl())
 
         testProxy.bind(this)
@@ -35,21 +37,21 @@ class MainActivity : AppCompatActivity() {
                 Log.i("MainActivity=====", "id=$id | data=$data")
             }
 
-        btnTest.setOnClickListener {
+        vb?.btnTest?.setOnClickListener {
             testProxy.request(id++)
         }
 
-ProxyFactory.createPageIdActionProxy<String, String> { id, pages ->  Observable.just("I'm Result for $id. Pages(page:${pages.page}, size:${pages.size}).") }
-    .bind(this, object :IdActionDataProxy.IdActionDataCallback<String, ActionParameter, String>{
-        override fun onSuccess(id: String, action: ActionParameter, data: String) {
-            TODO("Not yet implemented")
-        }
+        ProxyFactory.createPageIdActionProxy<String, String> { id, pages -> Observable.just("I'm Result for $id. Pages(page:${pages.page}, size:${pages.size}).") }
+            .bind(this, object : IdActionDataProxy.IdActionDataCallback<String, ActionParameter, String> {
+                override fun onSuccess(id: String, action: ActionParameter, data: String) {
+//                    TODO("Not yet implemented")
+                }
 
-        override fun onFailed(id: String, action: ActionParameter, e: ApiException) {
-            TODO("Not yet implemented")
-        }
-    })
-    .request(PageActionParameter.createInstance(true, 20), "Kelin")
+                override fun onFailed(id: String, action: ActionParameter, e: ApiException) {
+//                    TODO("Not yet implemented")
+                }
+            })
+            .request(PageActionParameter.createInstance(true, 20), "Kelin")
 
         //Use ProxyFactory simple。
         ProxyFactory.createProxy {
@@ -64,13 +66,18 @@ ProxyFactory.createPageIdActionProxy<String, String> { id, pages ->  Observable.
         }.progress(this)
             .onSuccess {
                 // Do something when success.
-                tvResult.text = it
+                vb?.tvResult?.text = it
             }
             .onFailed {
                 // Do something when failed.
-                tvResult.text = it.displayMessage
+                vb?.tvResult?.text = it.displayMessage
             }
             .request()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        vb = null
     }
 
     private inner class ToasterImpl : Toaster {
@@ -93,14 +100,14 @@ ProxyFactory.createPageIdActionProxy<String, String> { id, pages ->  Observable.
          * 显示加载中的样式。
          */
         override fun showProgress(context: Context, progressTip: String?) {
-            tvStatus.text = "加载中，请稍后"
+            vb?.tvStatus?.text = "加载中，请稍后"
         }
 
         /**
          * 隐藏加载中的样式。
          */
         override fun hideProgress(context: Context) {
-            tvStatus.text = "加载完毕"
+            vb?.tvStatus?.text = "加载完毕"
         }
     }
 }

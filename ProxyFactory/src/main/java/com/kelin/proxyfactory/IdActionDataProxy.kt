@@ -98,11 +98,13 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
             observer.dispose()
         }
 
+        //TODO 验证这里的逻辑。
+        val cacheKey = getCacheKey(id, action)
         @Suppress("unchecked_cast")
-        var useCase = mUseCaseMap.get(getCacheKey(id, action)) as? UseCase<D>
+        var useCase = mUseCaseMap.get(cacheKey) as? UseCase<D>
         if (useCase == null) {
             useCase = createUseCase(id, action)
-            mUseCaseMap.put(getCacheKey(id, action), useCase)
+            mUseCaseMap.put(cacheKey, useCase)
         }
 
         useCase.execute(observer)
@@ -127,9 +129,8 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     }
 
     private fun getCacheKey(id: ID, action: ActionParameter): Int {
-        var result = id?.hashCode() ?: CONSTANT_CACHE_KEY
-        result = 31 * result + action.hashCode()
-        return result
+        val idKey = id?.hashCode() ?: CONSTANT_CACHE_KEY
+        return idKey + action.hashCode()
     }
 
     private fun createCallback(id: ID, action: ActionParameter): UseCaseSubscriber<D> {

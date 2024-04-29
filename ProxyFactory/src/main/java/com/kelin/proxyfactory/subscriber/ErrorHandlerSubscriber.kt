@@ -70,7 +70,8 @@ abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCase
         }
     }
 
-    override fun onNext(t: T) {
+
+    override fun onNext(t: T & Any) {
         try {
             onSuccess(t)
         } catch (e: Exception) {

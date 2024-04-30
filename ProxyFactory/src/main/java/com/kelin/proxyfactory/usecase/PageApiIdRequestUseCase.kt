@@ -1,5 +1,6 @@
 package com.kelin.proxyfactory.usecase
 
+import com.kelin.proxyfactory.IdOwner
 import com.kelin.proxyfactory.PageActionParameter
 import io.reactivex.Observable
 
@@ -12,7 +13,7 @@ import io.reactivex.Observable
  *
  * **版本:** v 1.0.0
  */
-class PageApiIdRequestUseCase<ID, DATA>(private val id: ID, private val pages: PageActionParameter.Pages, private val caller: (id: ID, pages: PageActionParameter.Pages) -> Observable<DATA>) : UseCase<DATA>() {
+internal class PageApiIdRequestUseCase<ID, DATA>(override var id: ID, private val pages: PageActionParameter.Pages, private val caller: (id: ID, pages: PageActionParameter.Pages) -> Observable<DATA>) : UseCase<DATA>(), IdOwner<ID> {
     override fun buildUseCaseObservable(): Observable<DATA> {
         return caller(id, pages)
     }

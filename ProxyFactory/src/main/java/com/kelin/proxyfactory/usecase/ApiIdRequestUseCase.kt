@@ -1,5 +1,6 @@
 package com.kelin.proxyfactory.usecase
 
+import com.kelin.proxyfactory.IdOwner
 import io.reactivex.Observable
 
 
@@ -12,7 +13,7 @@ import io.reactivex.Observable
  *
  * **版本:** v 1.0.0
  */
-class ApiIdRequestUseCase<ID, DATA>(private val id: ID, private val caller: (id: ID) -> Observable<DATA>) : UseCase<DATA>() {
+internal class ApiIdRequestUseCase<ID, DATA>(override var id: ID, private val caller: (id: ID) -> Observable<DATA>) : UseCase<DATA>(), IdOwner<ID> {
     override fun buildUseCaseObservable(): Observable<DATA> {
         return caller(id)
     }

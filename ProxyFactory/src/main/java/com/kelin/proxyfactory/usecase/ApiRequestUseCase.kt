@@ -12,7 +12,7 @@ import io.reactivex.Observable
  *
  * **版本:** v 1.0.0
  */
-class ApiRequestUseCase<DATA>(private val caller: () -> Observable<DATA>) : UseCase<DATA>() {
+internal class ApiRequestUseCase<DATA>(private val caller: () -> Observable<DATA>) : UseCase<DATA>() {
     override fun buildUseCaseObservable(): Observable<DATA> {
         return caller()
     }

@@ -21,15 +21,7 @@ class PageActionParameter private constructor(action: LoadAction, val pages: Pag
     }
 
     override fun equals(other: Any?): Boolean {
-        return if (this === other) {
-            true
-        } else if (other == null || javaClass != other.javaClass) {
-            false
-        } else {
-            val that = other as? PageActionParameter
-            if (pages?.page != that?.pages?.page) false else pages?.size == that?.pages?.size
-        }
-
+        return other != null && other is PageActionParameter && pages == other.pages
     }
 
     fun resetPages() {
@@ -39,9 +31,14 @@ class PageActionParameter private constructor(action: LoadAction, val pages: Pag
         }
     }
 
+    override fun hashCode(): Int {
+        return pages?.hashCode() ?: action.hashCode()
+    }
+
     companion object {
         const val DEFAULT_PAGE_SIZE = 20
         const val FIRST_PAGE_NUMBER = 1
+
         /**
          * 获取加载实例。
          */
@@ -50,5 +47,15 @@ class PageActionParameter private constructor(action: LoadAction, val pages: Pag
         }
     }
 
-    data class Pages(var page: Int, var size: Int)
+    data class Pages(var page: Int, var size: Int) {
+        override fun equals(other: Any?): Boolean {
+            return other != null && other is Pages && page == other.page && size == other.size
+        }
+
+        override fun hashCode(): Int {
+            var result = page
+            result = 31 * result + size
+            return result
+        }
+    }
 }

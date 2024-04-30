@@ -79,12 +79,12 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
      * @param action 动作，用来表示当前请求是如何触发的。
      * @param id 请求参数。
      */
+    @Suppress("UNCHECKED_CAST")
     fun request(action: ActionParameter, id: ID) {
         isWorking = true
         context?.also { toaster.showProgress(it, progressText) }
         var e = checkPreCondition(id, action)
         val observer = createCallback(id, action)
-        Logger.system("===>DataProxy")?.d("Working:${hashCode()} | ${observer.hashCode()}")
         if (e != null) {
             observer.onError(e)
             observer.onComplete()
@@ -99,9 +99,8 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         }
 
         val cacheKey = getCacheKey(id, action)
-        Logger.system("Proxy")?.d("=============ProxyCacheKey${cacheKey}|${id.hashCode()}|${id}")
-        @Suppress("unchecked_cast")
         var useCase = mUseCaseMap.get(cacheKey) as? UseCase<D>
+        (useCase as? IdOwner<ID>)?.also { it.id = id }
         if (useCase == null) {
             useCase = createUseCase(id, action)
             mUseCaseMap.put(cacheKey, useCase)

@@ -128,8 +128,9 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     }
 
     private fun getCacheKey(id: ID, action: ActionParameter): Int {
-        val idKey = id?.hashCode() ?: CONSTANT_CACHE_KEY
-        return idKey + action.hashCode()
+        var result = id?.hashCode() ?: CONSTANT_CACHE_KEY
+        result = 31 * result + action.hashCode()
+        return result
     }
 
     private fun createCallback(id: ID, action: ActionParameter): UseCaseSubscriber<D> {

@@ -99,7 +99,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
         }
 
         val cacheKey = getCacheKey(id, action)
-        Logger.system("Proxy")?.d("=============ProxyCacheKey${cacheKey}")
+        Logger.system("Proxy")?.d("=============ProxyCacheKey${cacheKey}|${id.hashCode()}|${id}")
         @Suppress("unchecked_cast")
         var useCase = mUseCaseMap.get(cacheKey) as? UseCase<D>
         if (useCase == null) {

@@ -98,8 +98,8 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
             observer.dispose()
         }
 
-        //TODO 验证这里的逻辑。
         val cacheKey = getCacheKey(id, action)
+        Logger.system("Proxy")?.d("=============ProxyCacheKey${cacheKey}")
         @Suppress("unchecked_cast")
         var useCase = mUseCaseMap.get(cacheKey) as? UseCase<D>
         if (useCase == null) {

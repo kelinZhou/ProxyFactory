@@ -1,12 +1,11 @@
 package com.kelin.proxyfactory
 
 import android.content.Context
-import android.net.ConnectivityManager
+import android.util.Log
 import android.util.LruCache
 import android.util.SparseArray
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.*
 import com.kelin.apiexception.ApiException
 import com.kelin.logger.Logger
@@ -50,9 +49,6 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
 
     val isNotWorking: Boolean
         get() = !isWorking
-
-    private val isNetWorkConnected: Boolean
-        get() = ContextCompat.getSystemService(context ?: ProxyFactory.getContext(), ConnectivityManager::class.java)?.activeNetworkInfo?.isConnected == true
 
     protected var mGlobalCallback: IdActionDataCallback<ID, ActionParameter, D>? = null
     private var mSubscriptions: ExtCompositeSubscription? = null
@@ -138,7 +134,8 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     }
 
     private fun checkPreCondition(id: ID, action: ActionParameter): ApiException? {
-        return if (!checkNetWork || isNetWorkConnected) {
+        Log.i("ProxyFactory", "=======检查条件：${checkNetWork}|${ProxyFactory.isNetworkAvailable}|${!checkNetWork || ProxyFactory.isNetworkAvailable}")
+        return if (!checkNetWork || ProxyFactory.isNetworkAvailable) {
             null
         } else {
             ApiException(ProxyLogicError.NETWORK_UNAVAILABLE)

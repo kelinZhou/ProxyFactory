@@ -2,8 +2,14 @@ package com.kelin.proxyfactory
 
 import android.app.Application
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.logger.LogOption
+import com.kelin.logger.Logger
 import com.kelin.proxyfactory.usecase.*
 import io.reactivex.Observable
 import java.lang.RuntimeException
@@ -29,11 +35,33 @@ object ProxyFactory {
     private val requireToaster: Toaster
         get() = mToaster ?: throw NullPointerException("You must call the ProxyFactory.init() Method before use the ProxyFactory")
 
+    internal var isNetworkAvailable = true
+
     fun init(context: Application, toaster: Toaster, isDebug: Boolean = false) {
         LogOption.init("ProxyFactory", isDebug)
         mContext = context
         mToaster = toaster
         isDebugMode = isDebug
+        ContextCompat.getSystemService(context, ConnectivityManager::class.java)?.also { service ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                service.unregisterNetworkCallback(object : ConnectivityManager.NetworkCallback() {
+                    override fun onLost(network: Network) {
+                        isNetworkAvailable = false
+                        Logger.system("ProxyFactory")?.i("网络连接已断开")
+                    }
+
+                    override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+                        Logger.system("ProxyFactory")?.i("代理开启情况：${networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)}")
+                        if (networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
+                            isNetworkAvailable = true
+                            Logger.system("ProxyFactory")?.i("网络连接已恢复")
+                        }
+                    }
+                })
+            } else {
+                isNetworkAvailable = service.activeNetworkInfo?.isConnected != false
+            }
+        }
     }
 
     fun recycle() {

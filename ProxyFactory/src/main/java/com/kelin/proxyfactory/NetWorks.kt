@@ -7,6 +7,9 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.kelin.logger.Logger
 
 /**
@@ -19,40 +22,86 @@ import com.kelin.logger.Logger
  * **版本:** v 1.0.0
  */
 object NetWorks {
+    /**
+     * 是否已被初始化。
+     */
+    private var initialized = false
+
+    private val networkChangedListeners by lazy { ArrayList<NetworkStateChangedListener>() }
+    private val lifecycleNetworkChangedListeners by lazy { ArrayList<NetworkStateChangedListenerWrapper>() }
 
     /**
      * 判断网络是否可用。
      */
     var isNetworkAvailable = true
         private set
-        get() = if (ProxyFactory.isDebugMode) field else field && isNotVpn
+        get() = field && isNotVpn  //开启vpn检测后isNotVpn字段才可能为false，所以这里直接加上isNotVpn的校验(不开启vpn检测时isNotVpn永远为true)。
 
     /**
      * 判断是否开启了VPN。
      */
     var isNotVpn = true
 
-    internal fun init(context: Application, vpnCheck: Boolean) {
-        ContextCompat.getSystemService(context, ConnectivityManager::class.java).also { service ->
-            if (service != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    service.registerDefaultNetworkCallback(NetworkCallbackImpl(vpnCheck))
-                } else {
-                    service.registerNetworkCallback(
-                        NetworkRequest.Builder()
-                            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-                            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                            .build(),
-                        NetworkCallbackImpl(vpnCheck)
-                    )
+    /**
+     * 初始化。
+     * @param context 应用上下文。
+     * @param vpnCheck 是否开启VPN检测，只有开启VPN检测后isNotVpn才可能为false，同时isNetworkAvailable的判断逻辑才会加入vpn的校验。
+     */
+    fun init(context: Application, vpnCheck: Boolean) {
+        if (!initialized) {
+            initialized = true
+            ContextCompat.getSystemService(context, ConnectivityManager::class.java).also { service ->
+                if (service != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        service.registerDefaultNetworkCallback(NetworkCallbackImpl(vpnCheck))
+                    } else {
+                        service.registerNetworkCallback(
+                            NetworkRequest.Builder()
+                                .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+                                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                                .build(),
+                            NetworkCallbackImpl(vpnCheck)
+                        )
+                    }
                 }
             }
+        } else {
+            Logger.system("NetWorks")?.w("The Networks is initialized!!!")
         }
+    }
+
+    /**
+     * 注册网络状态改变的监听，通过该方法注册的监听无需反注册，监听的声明周期会自动绑定到目标生命周期组件上。
+     * @param owner 需要绑定的生命周期组件。
+     * @param l 监听。
+     */
+    fun registerNetworkStateChangedListener(owner: LifecycleOwner, l: NetworkStateChangedListener) {
+        l(isNetworkAvailable)
+        owner.lifecycle.addObserver(NetworkStateChangedListenerWrapper(l).also {
+            lifecycleNetworkChangedListeners.add(it)
+        })
+    }
+
+    /**
+     * 添加一个网络改变的监听。
+     */
+    fun addNetworkStateChangedListener(l: NetworkStateChangedListener) {
+        l(isNetworkAvailable)
+        networkChangedListeners.add(l)
+    }
+
+    /**
+     * 移除一个通过addNetworkStateChangedListener方法添加的监听。
+     */
+    fun removeNetworkStateChangedListener(l: NetworkStateChangedListener) {
+        networkChangedListeners.remove(l)
     }
 
     private class NetworkCallbackImpl(private val vpnCheck: Boolean) : ConnectivityManager.NetworkCallback() {
         override fun onLost(network: Network) {
-            isNetworkAvailable = false
+            if (isNetworkAvailable) {
+                notifyStateChanged(false)
+            }
             Logger.system("NetWorks")?.i("网络连接已断开")
         }
 
@@ -62,9 +111,36 @@ object NetWorks {
                 isNotVpn = notVpn
             }
             if (networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
-                isNetworkAvailable = true
+                if (!isNetworkAvailable) {
+                    notifyStateChanged(true)
+                }
                 Logger.system("NetWorks")?.i("网络连接已恢复，VPN开启:${!notVpn}")
             }
         }
     }
+
+    private fun notifyStateChanged(connected: Boolean) {
+        isNetworkAvailable = connected
+        networkChangedListeners.forEach { it(connected) }
+        lifecycleNetworkChangedListeners.forEach { it.onChanged(connected) }
+    }
+
+    private class NetworkStateChangedListenerWrapper(listener: NetworkStateChangedListener) : LifecycleEventObserver {
+
+        private var innerListener: NetworkStateChangedListener? = listener
+
+        fun onChanged(available: Boolean) {
+            innerListener?.invoke(available)
+        }
+
+        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+            if (event == Lifecycle.Event.ON_DESTROY) {
+                lifecycleNetworkChangedListeners.remove(this)
+                innerListener = null
+                source.lifecycle.removeObserver(this)
+            }
+        }
+    }
 }
+
+typealias NetworkStateChangedListener = (connected: Boolean) -> Unit

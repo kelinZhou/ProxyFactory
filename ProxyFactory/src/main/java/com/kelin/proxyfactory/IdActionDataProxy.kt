@@ -1,7 +1,6 @@
 package com.kelin.proxyfactory
 
 import android.content.Context
-import android.util.Log
 import android.util.LruCache
 import android.util.SparseArray
 import androidx.annotation.CallSuper
@@ -24,7 +23,7 @@ import java.lang.Exception
  *
  * **版本:** v 1.0.0
  */
-abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : LifecycleEventObserver {
+abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHandler) : LifecycleEventObserver {
 
     companion object {
         private const val CONSTANT_CACHE_KEY = 1
@@ -78,7 +77,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     @Suppress("UNCHECKED_CAST")
     fun request(action: ActionParameter, id: ID) {
         isWorking = true
-        context?.also { toaster.showProgress(it, progressText) }
+        context?.also { proxyHandler.showProgress(it, progressText) }
         var e = checkPreCondition(id, action)
         val observer = createCallback(id, action)
         if (e != null) {
@@ -134,7 +133,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     }
 
     private fun checkPreCondition(id: ID, action: ActionParameter): ApiException? {
-        Log.i("ProxyFactory", "=======检查条件：${checkNetWork}|${NetWorks.isNetworkAvailable}|${!checkNetWork || NetWorks.isNetworkAvailable}")
+        Logger.system("ProxyFactory")?.i("=======检查条件：${checkNetWork}|${NetWorks.isNetworkAvailable}|${!checkNetWork || NetWorks.isNetworkAvailable}")
         return if (!checkNetWork || NetWorks.isNetworkAvailable) {
             null
         } else {
@@ -181,7 +180,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     }
 
     private fun onHideProgress() {
-        context?.also { toaster.hideProgress(it) }
+        context?.also { proxyHandler.hideProgress(it) }
     }
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
@@ -203,7 +202,7 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     /**
      * 用户行为观察者
      */
-    internal inner class IdActionCaseSubscriber(private val id: ID, private val action: ActionParameter) : ErrorHandlerSubscriber<D>(toaster) {
+    internal inner class IdActionCaseSubscriber(private val id: ID, private val action: ActionParameter) : ErrorHandlerSubscriber<D>(proxyHandler) {
 
         override fun onFinished(successful: Boolean?) {
             super.onFinished(successful)

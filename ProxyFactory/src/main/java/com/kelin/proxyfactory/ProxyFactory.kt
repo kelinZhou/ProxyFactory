@@ -24,17 +24,24 @@ object ProxyFactory {
     internal var isDebugMode = false
         private set
 
-    private var mToaster: Toaster? = null
+    private var mProxyHandler: ProxyEventHandler? = null
 
-    private val requireToaster: Toaster
-        get() = mToaster ?: throw NullPointerException("You must call the ProxyFactory.init() Method before use the ProxyFactory")
+    private val requireProxyHandler: ProxyEventHandler
+        get() = mProxyHandler ?: throw NullPointerException("You must call the ProxyFactory.init() Method before use the ProxyFactory")
 
-    fun init(context: Application, toaster: Toaster, isDebug: Boolean = false) {
+    /**
+     * 初始化ProxyFactory。
+     * @param context 应用上下文。
+     * @param proxyHandler 事件处理器。
+     * @param isDebug 是否开启Debug模式。
+     * @param vpnCheck 是否开启VPN校验。
+     */
+    fun init(context: Application, proxyHandler: ProxyEventHandler, isDebug: Boolean = false, vpnCheck: Boolean = true) {
         LogOption.init("ProxyFactory", isDebug)
         mContext = context
-        mToaster = toaster
+        mProxyHandler = proxyHandler
         isDebugMode = isDebug
-        NetWorks.init(context)
+        NetWorks.init(context, vpnCheck)
     }
 
     fun recycle() {
@@ -56,7 +63,7 @@ object ProxyFactory {
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
     fun <ID, DATA> createIdActionProxy(caller: (id: ID) -> Observable<DATA>): IdActionDataProxy<ID, DATA> {
-        return object : IdActionDataProxy<ID, DATA>(requireToaster) {
+        return object : IdActionDataProxy<ID, DATA>(requireProxyHandler) {
             override fun createUseCase(id: ID, action: ActionParameter): UseCase<DATA> {
                 return ApiIdRequestUseCase(id, caller)
             }
@@ -69,7 +76,7 @@ object ProxyFactory {
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
     fun <DATA> createActionProxy(owner: LifecycleOwner? = null, caller: () -> Observable<DATA>): ActionDataProxy<DATA> {
-        return object : ActionDataProxy<DATA>(requireToaster) {
+        return object : ActionDataProxy<DATA>(requireProxyHandler) {
             override fun createUseCase(action: ActionParameter): UseCase<DATA> {
                 return ApiRequestUseCase(caller)
             }
@@ -82,7 +89,7 @@ object ProxyFactory {
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
     fun <ID, DATA> createIdProxy(owner: LifecycleOwner? = null, caller: (id: ID) -> Observable<DATA>): IdDataProxy<ID, DATA> {
-        return object : IdDataProxy<ID, DATA>(requireToaster) {
+        return object : IdDataProxy<ID, DATA>(requireProxyHandler) {
             override fun createUseCase(id: ID): UseCase<DATA> {
                 return ApiIdRequestUseCase(id, caller)
             }
@@ -95,7 +102,7 @@ object ProxyFactory {
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
     fun <DATA> createProxy(owner: LifecycleOwner? = null, caller: () -> Observable<DATA>): DataProxy<DATA> {
-        return object : DataProxy<DATA>(requireToaster) {
+        return object : DataProxy<DATA>(requireProxyHandler) {
             override fun createUseCase(): UseCase<DATA> {
                 return ApiRequestUseCase(caller)
             }
@@ -108,7 +115,7 @@ object ProxyFactory {
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
     fun <ID, DATA> createPageIdActionProxy(caller: (id: ID, pages: PageActionParameter.Pages) -> Observable<DATA>): IdActionDataProxy<ID, DATA> {
-        return object : IdActionDataProxy<ID, DATA>(requireToaster) {
+        return object : IdActionDataProxy<ID, DATA>(requireProxyHandler) {
             override fun createUseCase(id: ID, action: ActionParameter): UseCase<DATA> {
                 //这里改用子类集成IdActionDataProxy
                 return if (action is PageActionParameter && action.pages != null) {
@@ -124,7 +131,7 @@ object ProxyFactory {
      * @param caller api调用器，具体要调用那个api由调用器决定。
      */
     fun <DATA> createPageActionProxy(owner: LifecycleOwner? = null, caller: (pages: PageActionParameter.Pages) -> Observable<DATA>): ActionDataProxy<DATA> {
-        return object : ActionDataProxy<DATA>(requireToaster) {
+        return object : ActionDataProxy<DATA>(requireProxyHandler) {
             override fun createUseCase(action: ActionParameter): UseCase<DATA> {
                 //这里改用子类集成ActionDataProxy
                 return if (action is PageActionParameter && action.pages != null) {

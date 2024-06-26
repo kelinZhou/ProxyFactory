@@ -14,7 +14,7 @@ import com.kelin.proxyfactory.usecase.UseCase
  *
  * **版本:** v 1.0.0
  */
-abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaster), LifecycleProxy {
+abstract class DataProxy<D>(proxyHandler: ProxyEventHandler) : IdActionDataProxy<Any, D>(proxyHandler), LifecycleProxy {
 
     private val defaultAction = ActionParameter.createInstance()
     private val defaultId = Any()
@@ -111,7 +111,7 @@ abstract class DataProxy<D>(toaster: Toaster) : IdActionDataProxy<Any, D>(toaste
             if (failed != null) {
                 failed?.invoke(e)
             } else if (!noToast) {
-                toaster.showFailedToast(e)
+                proxyHandler.showFailedToast(e)
             }
         }
     }

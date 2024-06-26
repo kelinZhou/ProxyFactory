@@ -4,7 +4,7 @@ import android.content.Context
 import com.kelin.apiexception.ApiException
 
 /**
- * **描述:** Toast提示器。
+ * **描述:** ProxyFactory的事件处理器。
  *
  * **创建人:** kelin
  *
@@ -12,7 +12,7 @@ import com.kelin.apiexception.ApiException
  *
  * **版本:** v 1.0.0
  */
-interface Toaster {
+interface ProxyEventHandler {
 
     /**
      * 处理异步任务中捕获的异常，如果你希望自己处理改异常则需要返回null，返回null之后Proxy的onFailed方法将不会被回调，否则会将你返回的ApiException回调给Proxy的onFailed方法。

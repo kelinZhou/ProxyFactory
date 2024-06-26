@@ -3,7 +3,7 @@ package com.kelin.proxyfactory.subscriber
 import androidx.annotation.CallSuper
 import com.kelin.apiexception.ApiException
 import com.kelin.proxyfactory.ProxyFactory
-import com.kelin.proxyfactory.Toaster
+import com.kelin.proxyfactory.ProxyEventHandler
 
 /**
  * **描述:** 错误处理的的观察者。
@@ -14,7 +14,7 @@ import com.kelin.proxyfactory.Toaster
  *
  * **版本:** v 1.0.0
  */
-abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCaseSubscriber<T>() {//api错误处理的观察者
+abstract class ErrorHandlerSubscriber<T>(private val proxyHandler: ProxyEventHandler) : UseCaseSubscriber<T>() {//api错误处理的观察者
 
     override val isAchieved: Boolean
         get() = isDisposed
@@ -59,7 +59,7 @@ abstract class ErrorHandlerSubscriber<T>(private val toaster: Toaster) : UseCase
     }
 
     protected open fun dealError(e: Throwable) {
-        toaster.handError(e)?.also { onError(it) }
+        proxyHandler.handError(e)?.also { onError(it) }
     }
 
     protected fun printError(e: Throwable, tip: String) {

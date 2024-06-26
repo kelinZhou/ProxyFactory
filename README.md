@@ -24,7 +24,7 @@ dependencies {
 ## 使用
 在使用之前需要先对其进行初始化。
 ```kotlin
-ProxyFactory.init(application, ToasterImpl(), isDebug, !isDebug)
+ProxyFactory.init(application, ProxyEventHandlerImpl(), isDebug, !isDebug)
 
 class ProxyEventHandlerImpl : ProxyEventHandler {
     /**

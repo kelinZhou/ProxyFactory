@@ -24,9 +24,9 @@ dependencies {
 ## 使用
 在使用之前需要先对其进行初始化。
 ```kotlin
-ProxyFactory.init(application, ToasterImpl())
+ProxyFactory.init(application, ToasterImpl(), isDebug, !isDebug)
 
-class ToasterImpl : Toaster {
+class ProxyEventHandlerImpl : ProxyEventHandler {
     /**
      * 处理异步任务中捕获的异常，如果你希望自己处理改异常则需要返回null，返回null之后Proxy的onFailed方法将不会被回调，否则会将你返回的ApiException回调给Proxy的onFailed方法。
      */

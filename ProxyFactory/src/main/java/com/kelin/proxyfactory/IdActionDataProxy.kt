@@ -133,7 +133,6 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
     }
 
     private fun checkPreCondition(id: ID, action: ActionParameter): ApiException? {
-        Logger.system("ProxyFactory")?.i("=======检查条件：${checkNetWork}|${NetWorks.isNetworkAvailable}|${!checkNetWork || NetWorks.isNetworkAvailable}")
         return if (!checkNetWork || NetWorks.isNetworkAvailable) {
             null
         } else {

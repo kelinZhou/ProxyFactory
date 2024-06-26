@@ -134,8 +134,8 @@ abstract class IdActionDataProxy<ID, D>(protected val toaster: Toaster) : Lifecy
     }
 
     private fun checkPreCondition(id: ID, action: ActionParameter): ApiException? {
-        Log.i("ProxyFactory", "=======检查条件：${checkNetWork}|${ProxyFactory.isNetworkAvailable}|${!checkNetWork || ProxyFactory.isNetworkAvailable}")
-        return if (!checkNetWork || ProxyFactory.isNetworkAvailable) {
+        Log.i("ProxyFactory", "=======检查条件：${checkNetWork}|${NetWorks.isNetworkAvailable}|${!checkNetWork || NetWorks.isNetworkAvailable}")
+        return if (!checkNetWork || NetWorks.isNetworkAvailable) {
             null
         } else {
             ApiException(ProxyLogicError.NETWORK_UNAVAILABLE)

@@ -99,10 +99,10 @@ object NetWorks {
 
     private class NetworkCallbackImpl(private val vpnCheck: Boolean) : ConnectivityManager.NetworkCallback() {
         override fun onLost(network: Network) {
-            if (isNetworkAvailable) {
+            if (isNetworkAvailable) {  //去重判断，防止重复触发
                 notifyStateChanged(false)
+                Logger.system("NetWorks")?.i("网络连接已断开")
             }
-            Logger.system("NetWorks")?.i("网络连接已断开")
         }
 
         override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
@@ -111,10 +111,10 @@ object NetWorks {
                 isNotVpn = notVpn
             }
             if (networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
-                if (!isNetworkAvailable) {
+                if (!isNetworkAvailable) {  //去重判断，防止重复触发
                     notifyStateChanged(true)
+                    Logger.system("NetWorks")?.i("网络连接已恢复，VPN开启:${!notVpn}")
                 }
-                Logger.system("NetWorks")?.i("网络连接已恢复，VPN开启:${!notVpn}")
             }
         }
     }

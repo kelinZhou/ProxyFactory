@@ -34,76 +34,104 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
         }
     }
 
+    protected var isDestroyed = false
+        private set
     private var context: Context? = null
     private var progressText: String? = null
 
     private var checkNetWork = true
 
-    protected var noToast = false
+    protected var failedTipDisable = false
 
     private val defaultRequestId = Any()
 
+    /**
+     * 判断当前异步代理是否正在执行任务。
+     * @see isNotWorking
+     */
     var isWorking: Boolean = false
         private set
 
+    /**
+     * 判断当前代理是否是闲置状态(未在执行任务)。
+     * @see isWorking
+     */
     val isNotWorking: Boolean
         get() = !isWorking
 
     protected var mGlobalCallback: IdActionDataCallback<ID, ActionParameter, D>? = null
     private var mSubscriptions: ExtCompositeSubscription? = null
+
+    /**
+     * 用来记录失败次数。
+     */
     private val mErrorCount = SparseArray<ErrorWrapper>()
 
+    /**
+     * 判断当前异步代理是否已绑定。
+     */
     val isBound: Boolean
-        get() = mGlobalCallback != null
+        get() = !isDestroyed && mGlobalCallback != null
 
 
-    open fun withoutNetWork(): IdActionDataProxy<ID, D> {
+    /**
+     * 离线(无网络)模式下是否可用，如果可用则不会检测当前网络状态，否则会在执行任务前检测网络状态，如果网络未连接则会执行onFailed回调。
+     */
+    open fun offLineEnable(): IdActionDataProxy<ID, D> {
         checkNetWork = false
         return this
     }
 
-    open fun setNotToast(): IdActionDataProxy<ID, D> {
-        noToast = true
+    /**
+     * 当发生错误时禁用自动提示，未禁用时会在发生错误且没有设置错误回调的情况下弹出提示，弹出提示的行为由ProxyEventHandler决定。
+     * @see ProxyEventHandler
+     */
+    open fun failedAutoTipDisable(): IdActionDataProxy<ID, D> {
+        failedTipDisable = true
         return this
     }
 
     protected abstract fun createUseCase(id: ID, action: ActionParameter): UseCase<D>
 
     /**
-     * 执行请求，调用该方法使代理去做他该做的事情。
+     * 执行请求，调用该方法使代理去做它该做的事情。
      * @param action 动作，用来表示当前请求是如何触发的。
      * @param id 请求参数。
      */
     @Suppress("UNCHECKED_CAST")
     fun request(action: ActionParameter, id: ID) {
-        isWorking = true
-        context?.also { proxyHandler.showProgress(it, progressText) }
-        var e = checkPreCondition(id, action)
-        val observer = createCallback(id, action)
-        if (e != null) {
-            observer.onError(e)
-            observer.onComplete()
-            observer.dispose()
+        if (!isDestroyed) {
+            isWorking = true
+            context?.also { proxyHandler.showProgress(it, progressText) }
+            var e = checkPreCondition(id, action)
+            val observer = createCallback(id, action)
+            if (e != null) {
+                observer.onError(e)
+                observer.onComplete()
+                observer.dispose()
+            }
+
+            if (isExceedMaxErrorCount(id, action)) {
+                e = ApiException(ProxyLogicError.FAIL_TOO_MUCH)
+                observer.onError(e)
+                observer.onComplete()
+                observer.dispose()
+            }
+
+            val cacheKey = getCacheKey(id, action)
+            var useCase = mUseCaseMap.get(cacheKey) as? UseCase<D>
+            (useCase as? IdOwner<ID>)?.also { it.id = id }
+            if (useCase == null) {
+                useCase = createUseCase(id, action)
+                mUseCaseMap.put(cacheKey, useCase)
+            }
+
+            useCase.execute(observer)
+
+            mSubscriptions?.add(observer)
+        } else {
+            Logger.system("===>DataProxy")?.d("The proxy is destroyed:${javaClass.simpleName}(${hashCode()})")
         }
-
-        if (isExceedMaxErrorCount(id, action)) {
-            e = ApiException(ProxyLogicError.FAIL_TOO_MUCH)
-            observer.onError(e)
-            observer.onComplete()
-            observer.dispose()
-        }
-
-        val cacheKey = getCacheKey(id, action)
-        var useCase = mUseCaseMap.get(cacheKey) as? UseCase<D>
-        (useCase as? IdOwner<ID>)?.also { it.id = id }
-        if (useCase == null) {
-            useCase = createUseCase(id, action)
-            mUseCaseMap.put(cacheKey, useCase)
-        }
-
-        useCase.execute(observer)
-
-        mSubscriptions?.add(observer)
     }
 
     private fun isExceedMaxErrorCount(id: ID, action: ActionParameter): Boolean {
@@ -147,16 +175,20 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
      */
     @CallSuper
     fun bind(owner: LifecycleOwner, callBack: IdActionDataCallback<ID, ActionParameter, D>): IdActionDataProxy<ID, D> {
-        mSubscriptions = ExtCompositeSubscription()
-        if (mGlobalCallback != null) {
-            if (mGlobalCallback != callBack) {
-                unbind()
+        if (owner.lifecycle.currentState == Lifecycle.State.DESTROYED) {
+            isDestroyed = true
+        } else {
+            mSubscriptions = ExtCompositeSubscription()
+            if (mGlobalCallback != null) {
+                if (mGlobalCallback != callBack) {
+                    unbind()
+                    mGlobalCallback = callBack
+                }
+            } else {
                 mGlobalCallback = callBack
             }
-        } else {
-            mGlobalCallback = callBack
+            owner.lifecycle.addObserver(this)
         }
-        owner.lifecycle.addObserver(this)
         return this
     }
 
@@ -184,6 +216,7 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         if (event == Lifecycle.Event.ON_DESTROY) {
+            isDestroyed = true
             onHideProgress()
             context = null
             unbind()
@@ -209,7 +242,7 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
             isWorking = false
             onHideProgress()
             if (mGlobalCallback != null) {
-                mGlobalCallback!!.onFinished(id, action)
+                mGlobalCallback!!.onComplete(id, action)
             } else {
                 //页面如果已经销毁了，回调丢失是正常的，否则就是不正常。
                 Logger.system("===>DataProxy")?.e("The Proxy callback is Null!")
@@ -249,10 +282,27 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
 
         fun onFailed(id: ID, action: ACTION, e: ApiException)
 
-        fun onFinished(id: ID, action: ACTION) {}
+        fun onComplete(id: ID, action: ACTION) {}
     }
 
     interface DefaultIdDataCallback<ID, ACTION : ActionParameter, D> : IdActionDataCallback<ID, ACTION, D> {
+        override fun onSuccess(id: ID, action: ACTION, data: D) {
+            when (action.action) {
+                LoadAction.LOAD -> onLoadSuccess(id, data)
+                LoadAction.RETRY -> onRetrySuccess(id, data)
+                LoadAction.REFRESH, LoadAction.AUTO_REFRESH -> onRefreshSuccess(id, data)
+                else -> throw java.lang.RuntimeException("the action: ${action.action} not handler!")
+            }
+        }
+
+        override fun onFailed(id: ID, action: ACTION, e: ApiException) {
+            when (action.action) {
+                LoadAction.LOAD -> onLoadFailed(id, e)
+                LoadAction.RETRY -> onRetryFailed(id, e)
+                LoadAction.REFRESH, LoadAction.AUTO_REFRESH -> onRefreshFailed(id, e)
+                else -> throw java.lang.RuntimeException("the action: ${action.action} not handler!")
+            }
+        }
 
         fun onLoadSuccess(id: ID, data: D)
 
@@ -268,6 +318,21 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
     }
 
     interface PageIdDataCallback<ID, ACTION : ActionParameter, D> : DefaultIdDataCallback<ID, ACTION, D> {
+        override fun onSuccess(id: ID, action: ACTION, data: D) {
+            if (action.action == LoadAction.LOAD_MORE) {
+                onLoadMoreSuccess(id, data)
+            } else {
+                super.onSuccess(id, action, data)
+            }
+        }
+
+        override fun onFailed(id: ID, action: ACTION, e: ApiException) {
+            if (action.action == LoadAction.LOAD_MORE) {
+                onLoadMoreFailed(id, e)
+            } else {
+                super.onFailed(id, action, e)
+            }
+        }
 
         fun onLoadMoreFailed(id: ID, e: ApiException)
 

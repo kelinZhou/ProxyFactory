@@ -1,6 +1,7 @@
 package com.kelin.proxyfactory
 
 import android.content.Context
+import androidx.annotation.CallSuper
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.apiexception.ApiException
 import com.kelin.proxyfactory.usecase.UseCase
@@ -18,13 +19,13 @@ abstract class ActionDataProxy<D>(proxyHandler: ProxyEventHandler) : IdActionDat
 
     private val defaultRequestId = Any()
 
-    override fun withoutNetWork(): ActionDataProxy<D> {
-        super.withoutNetWork()
+    override fun offLineEnable(): ActionDataProxy<D> {
+        super.offLineEnable()
         return this
     }
 
-    override fun setNotToast(): ActionDataProxy<D> {
-        super.setNotToast()
+    override fun failedAutoTipDisable(): ActionDataProxy<D> {
+        super.failedAutoTipDisable()
         return this
     }
 
@@ -75,11 +76,13 @@ abstract class ActionDataProxy<D>(proxyHandler: ProxyEventHandler) : IdActionDat
      * 设置成功回调。
      * @param onSuccess 回调函数，当异步任务成功后将会调用该回调函数。
      */
-    fun onSuccess(onSuccess: (data: D, action: ActionParameter) -> Unit): ActionDataProxy<D> {
-        if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
-            (mGlobalCallback as InnerCallback).success = onSuccess
-        } else {
-            mGlobalCallback = SingleCallback().apply { success = onSuccess }
+    fun onSuccess(onSuccess: ActionParameter.(data: D, action: ActionParameter) -> Unit): ActionDataProxy<D> {
+        if (!isDestroyed) {
+            if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
+                (mGlobalCallback as InnerCallback).success = onSuccess
+            } else {
+                mGlobalCallback = SingleCallback().apply { success = onSuccess }
+            }
         }
         return this
     }
@@ -88,36 +91,61 @@ abstract class ActionDataProxy<D>(proxyHandler: ProxyEventHandler) : IdActionDat
      * 设置失败回调。
      * @param onFailed 回调函数，当异步任务失败后将会调用该回调函数。
      */
-    fun onFailed(onFailed: (e: ApiException, action: ActionParameter) -> Unit): ActionDataProxy<D> {
-        if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
-            (mGlobalCallback as InnerCallback).failed = onFailed
-        } else {
-            mGlobalCallback = SingleCallback().apply { failed = onFailed }
+    fun onFailed(onFailed: ActionParameter.(e: ApiException, action: ActionParameter) -> Unit): ActionDataProxy<D> {
+        if (!isDestroyed) {
+            if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
+                (mGlobalCallback as InnerCallback).failed = onFailed
+            } else {
+                mGlobalCallback = SingleCallback().apply { failed = onFailed }
+            }
+        }
+        return this
+    }
+
+    /**
+     * 设置任务完成的回调。
+     * @param onComplete 回调函数，当异步任务执行完毕后会调用该回调函数。
+     */
+    fun onComplete(onComplete: ActionParameter.() -> Unit): ActionDataProxy<D> {
+        if (!isDestroyed) {
+            if (mGlobalCallback != null && mGlobalCallback is InnerCallback) {
+                (mGlobalCallback as InnerCallback).complete = onComplete
+            } else {
+                mGlobalCallback = SingleCallback().apply { complete = onComplete }
+            }
         }
         return this
     }
 
     private open inner class InnerCallback : IdActionDataCallback<Any, ActionParameter, D> {
 
-        var success: ((data: D, action: ActionParameter) -> Unit)? = null
+        var success: (ActionParameter.(data: D, action: ActionParameter) -> Unit)? = null
 
-        var failed: ((e: ApiException, action: ActionParameter) -> Unit)? = null
+        var failed: (ActionParameter.(e: ApiException, action: ActionParameter) -> Unit)? = null
+
+        var complete: (ActionParameter.() -> Unit)? = null
 
         override fun onSuccess(id: Any, action: ActionParameter, data: D) {
-            success?.invoke(data, action)
+            success?.invoke(action, data, action)
         }
 
         override fun onFailed(id: Any, action: ActionParameter, e: ApiException) {
             if (failed != null) {
-                failed?.invoke(e, action)
-            } else if (!noToast) {
+                failed?.invoke(action, e, action)
+            } else if (!failedTipDisable) {
                 proxyHandler.showFailedToast(e)
             }
+        }
+
+        @CallSuper
+        override fun onComplete(id: Any, action: ActionParameter) {
+            complete?.invoke(action)
         }
     }
 
     private inner class SingleCallback : InnerCallback() {
-        override fun onFinished(id: Any, action: ActionParameter) {
+        override fun onComplete(id: Any, action: ActionParameter) {
+            super.onComplete(id, action)
             unbind()
         }
     }

@@ -26,7 +26,7 @@ object ProxyFactory {
 
     private var mProxyHandler: ProxyEventHandler? = null
 
-    private val requireProxyHandler: ProxyEventHandler
+    internal val requireProxyHandler: ProxyEventHandler
         get() = mProxyHandler ?: throw NullPointerException("You must call the ProxyFactory.init() Method before use the ProxyFactory")
 
     /**
@@ -44,6 +44,9 @@ object ProxyFactory {
         NetWorks.init(context, vpnCheck)
     }
 
+    /**
+     * 释放所有缓存。
+     */
     fun recycle() {
         IdActionDataProxy.clearUseCase()
     }
@@ -52,6 +55,15 @@ object ProxyFactory {
         return mContext ?: throw NullPointerException("You must call the MapKit.init() Method before use the MapKit")
     }
 
+    /**
+     * 尝试为LifecycleProxy绑定到生命周期组件。
+     * @param owner 声明周期组件。
+     *
+     * @see IdActionDataProxy.bind
+     * @see ActionDataProxy.bind
+     * @see IdDataProxy.bind
+     * @see DataProxy.bind
+     */
     private fun <P : LifecycleProxy> P.tryBindLifecycle(owner: LifecycleOwner?): P {
         owner?.also { bind(owner) }
         return this

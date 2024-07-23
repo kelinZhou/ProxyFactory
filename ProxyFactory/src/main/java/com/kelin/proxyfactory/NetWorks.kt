@@ -83,7 +83,7 @@ object NetWorks {
     }
 
     /**
-     * 添加一个网络改变的监听。
+     * 添加一个网络改变的监听，需要在合适的时机移除改监听，如果不想手动移除则需要通过registerNetworkStateChangedListener方法注册监听与声明周期组件进行绑定。
      */
     fun addNetworkStateChangedListener(l: NetworkStateChangedListener) {
         l(isNetworkAvailable)

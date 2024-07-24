@@ -52,6 +52,8 @@ object NetWorks {
             initialized = true
             ContextCompat.getSystemService(context, ConnectivityManager::class.java).also { service ->
                 if (service != null) {
+                    //因为回调具有延迟行，所以这里先获取一次当前网络连接状态。
+                    isNetworkAvailable = service.getNetworkCapabilities(service.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         service.registerDefaultNetworkCallback(NetworkCallbackImpl(vpnCheck))
                     } else {

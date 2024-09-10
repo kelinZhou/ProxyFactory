@@ -178,6 +178,7 @@ abstract class IdActionDataProxy<ID, D>(protected val proxyHandler: ProxyEventHa
         if (owner.lifecycle.currentState == Lifecycle.State.DESTROYED) {
             isDestroyed = true
         } else {
+            isDestroyed = false
             mSubscriptions = ExtCompositeSubscription()
             if (mGlobalCallback != null) {
                 if (mGlobalCallback != callBack) {
